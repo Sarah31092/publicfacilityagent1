@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}검색 결과{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <p class="eyebrow">SEARCH RESULTS</p>
+    <h1>공공시설 검색 결과</h1>
+</section>
+
+<section class="panel">
+    <form action="/search" method="get" class="search-form compact-form">
+        <label for="q">시설명 또는 시설 유형</label>
+        <input id="q" name="q" type="search" value="{{ q }}">
+        <div class="form-row">
+            <div>
+                <label for="area">지역</label>
+                <select id="area" name="area">
+                    {% for option in areas %}
+                {% if option == area %}
+                <option value="{{ option }}" selected>{{ option }}</option>
+                {% else %}
+                <option value="{{ option }}">{{ option }}</option>
+                {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="mode">검색 방식</label>
+                <select id="mode" name="mode">
+                    {% if mode == 'structured' %}
+                    <option value="structured" selected>시설명·유형 검색</option>
+                    {% else %}
+                    <option value="structured">시설명·유형 검색</option>
+                    {% endif %}
+                    {% if mode == 'vector' %}
+                    <option value="vector" selected>AI 유사도 검색</option>
+                    {% else %}
+                    <option value="vector">AI 유사도 검색</option>
+                    {% endif %}
+                </select>
+            </div>
+        </div>
+        <button type="submit">다시 검색</button>
+    </form>
+</section>
+
+{% if error %}
+<div class="notice error">{{ error }}</div>
+{% else %}
+<p class="result-count">{{ area }} · {{ 'AI 유사도 검색' if mode == 'vector' else '시설명·유형 검색' }} · {{ results|length }}건 표시</p>
+<section class="result-list">
+    {% for facility in results %}
+    <article class="result-card">
+        <div class="card-heading">
+            <div>
+                <span class="tag">{{ facility.get('개방시설유형구분', '유형 미등록') or '유형 미등록' }}</span>
+                <h2><a href="/facilities/{{ facility.get('id', '') }}">{{ facility.get('개방시설명', '시설명 미등록') }}</a></h2>
+            </div>
+            {% if facility.get('distance') is not none %}
+            <span class="score">유사도 검색 결과</span>
+            {% endif %}
+        </div>
+        <p>{{ facility.get('소재지도로명주소', '주소 미등록') or '주소 미등록' }}</p>
+        {% if facility.get('document') %}
+        <p class="muted">{{ facility.get('document') }}</p>
+        {% endif %}
+    </article>
+    {% else %}
+    <div class="empty-state">조건에 맞는 시설이 없습니다. 검색어 또는 지역을 변경해 주세요.</div>
+    {% endfor %}
+</section>
+{% endif %}
+<a class="back-link" href="/">처음으로</a>
+{% endblock %}

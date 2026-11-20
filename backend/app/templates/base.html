@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}AI 공공시설 검색{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body>
+    <header class="site-header">
+        <div class="page-width header-inner">
+            <a class="brand" href="/">공공시설 찾기</a>
+            <span>전국 공공시설 개방정보</span>
+        </div>
+    </header>
+    <main class="page-width">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="page-width site-footer">공공데이터 기반 시설 검색 서비스</footer>
+</body>
+</html>

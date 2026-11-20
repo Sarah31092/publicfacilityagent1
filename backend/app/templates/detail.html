@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ facility.get('개방시설명', '시설 상세 정보') }}{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <p class="eyebrow">FACILITY DETAILS</p>
+    <h1>{{ facility.get('개방시설명', '시설명 미등록') }}</h1>
+    <p>{{ facility.get('개방시설유형구분', '유형 미등록') }}</p>
+</section>
+<section class="panel detail-panel">
+    <dl class="detail-list">
+        {% for label, key in [
+            ('장소명', '개방장소명'),
+            ('도로명 주소', '소재지도로명주소'),
+            ('지번 주소', '소재지지번주소'),
+            ('휴관일', '휴관일'),
+            ('평일 운영시간', '평일운영시작시각'),
+            ('평일 종료시간', '평일운영종료시각'),
+            ('주말 운영시간', '주말운영시작시각'),
+            ('주말 종료시간', '주말운영종료시각'),
+            ('유료 여부', '유료사용여부'),
+            ('사용료', '사용료'),
+            ('초과 사용 단위 시간', '초과사용단위시간'),
+            ('초과 사용료', '초과사용료'),
+            ('수용 인원', '수용가능인원수'),
+            ('면적', '면적'),
+            ('신청 방법', '신청방법구분'),
+            ('부대시설', '부대시설정보'),
+            ('시설 사진 정보', '시설사진정보'),
+            ('관리 기관', '관리기관명'),
+            ('담당 부서', '담당부서명'),
+            ('문의 전화', '사용안내전화번호'),
+            ('홈페이지', '홈페이지주소'),
+            ('위도', '위도'),
+            ('경도', '경도'),
+            ('데이터 기준일', '데이터기준일자')
+        ] %}
+        {% if facility.get(key) %}
+        <div class="detail-row">
+            <dt>{{ label }}</dt>
+            <dd>
+                {% if key == '홈페이지주소' %}
+                <a href="{{ facility.get(key) }}">{{ facility.get(key) }}</a>
+                {% else %}
+                {{ facility.get(key) }}
+                {% endif %}
+            </dd>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </dl>
+</section>
+<a class="back-link" href="/">처음으로</a>
+{% endblock %}

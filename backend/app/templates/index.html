@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}공공시설 검색{% endblock %}
+{% block content %}
+<section class="hero">
+    <p class="eyebrow">PUBLIC FACILITY SEARCH</p>
+    <h1>필요한 공공시설을 찾아보세요</h1>
+    <p>전국 공공시설 {{ "{:,}".format(total_count) }}건의 정보를 검색할 수 있습니다.</p>
+</section>
+
+<section class="panel">
+    <h2>시설 검색</h2>
+    <form action="/search" method="get" class="search-form">
+        <label for="q">시설명 또는 시설 유형</label>
+        <input id="q" name="q" type="search" value="{{ q if q is defined else '' }}"
+               placeholder="예: 체육관, 수영장, 도서관">
+        <div class="form-row">
+            <div>
+                <label for="area">지역</label>
+                <select id="area" name="area">
+                    {% for option in areas %}
+                    {% if option == selected_area %}
+                    <option value="{{ option }}" selected>{{ option }}</option>
+                    {% else %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="mode">검색 방식</label>
+                <select id="mode" name="mode">
+                    <option value="structured">시설명·유형 검색</option>
+                    <option value="vector">AI 유사도 검색</option>
+                </select>
+            </div>
+        </div>
+        <button type="submit">시설 검색</button>
+    </form>
+</section>
+
+<section class="panel agent-panel">
+    <h2>AI 에이전트에게 질문하기</h2>
+    <p class="muted">예: 서울에서 이용할 수 있는 체육 시설을 찾아줘</p>
+    <form action="/ask" method="post" class="search-form">
+        <label for="question">질문</label>
+        <textarea id="question" name="question" rows="3" maxlength="1000" required
+                  placeholder="원하는 시설과 조건을 입력하세요">{{ question if question is defined else '' }}</textarea>
+        <label for="agent-area">검색 지역</label>
+        <select id="agent-area" name="area">
+            {% for option in areas %}
+            {% if option == selected_area %}
+            <option value="{{ option }}" selected>{{ option }}</option>
+            {% else %}
+            <option value="{{ option }}">{{ option }}</option>
+            {% endif %}
+            {% endfor %}
+        </select>
+        <button type="submit">질문하기</button>
+    </form>
+    {% if answer is defined %}
+    <div class="answer">
+        <h3>답변</h3>
+        <p class="plain-text">{{ answer }}</p>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
