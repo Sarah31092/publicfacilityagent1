@@ -46,7 +46,14 @@
 {% if error %}
 <div class="notice error">{{ error }}</div>
 {% else %}
-<p class="result-count">{{ area }} · {{ 'AI 유사도 검색' if mode == 'vector' else '시설명·유형 검색' }} · {{ results|length }}건 표시</p>
+<p class="result-count">
+    {{ area }} · {{ 'AI 유사도 검색' if mode == 'vector' else '시설명·유형 검색' }} ·
+    {% if mode == 'structured' %}
+    검색 결과 총 {{ total_matches }}건{% if total_matches > results|length %} (상위 {{ results|length }}건 표시){% endif %}
+    {% else %}
+    유사도 상위 결과 {{ results|length }}건 표시
+    {% endif %}
+</p>
 <section class="result-list">
     {% for facility in results %}
     <article class="result-card">

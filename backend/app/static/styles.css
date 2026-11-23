@@ -66,8 +66,18 @@ button {
 button:hover { background: #1849a9; }
 .agent-panel { margin-bottom: 40px; }
 .answer { margin-top: 20px; padding: 18px; border-radius: 8px; background: #f2f4f7; }
-.answer h3 { margin: 0 0 8px; }
+.answer h3 { margin: 18px 0 8px; }
+.answer-copy { padding: 12px; border-radius: 7px; background: #fff; }
+.answer-copy summary { color: #175cd3; font-weight: 700; cursor: pointer; }
+.answer-copy[open] .plain-text { max-height: 18rem; margin-top: 10px; overflow-y: auto; }
 .plain-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.facility-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.facility-card { min-width: 0; padding: 16px; border: 1px solid #e4e7ec; border-radius: 9px; background: #fff; }
+.facility-card h4 { margin: 6px 0 0; font-size: 1.05rem; }
+.facility-info { margin: 12px 0 0; }
+.facility-info > div { display: grid; grid-template-columns: 90px 1fr; gap: 10px; padding: 7px 0; border-top: 1px solid #f2f4f7; }
+.facility-info dt { color: #667085; font-size: .88rem; font-weight: 600; }
+.facility-info dd { margin: 0; overflow-wrap: anywhere; }
 .page-heading { padding-top: 35px; }
 .compact-form { gap: 8px; }
 .result-count { color: #475467; font-size: .92rem; }
@@ -94,4 +104,5 @@ button:hover { background: #1849a9; }
     .panel, .result-card { padding: 18px; }
     .form-row { grid-template-columns: 1fr; }
     .detail-row { grid-template-columns: 1fr; gap: 3px; }
+    .facility-info > div { grid-template-columns: 1fr; gap: 2px; }
 }

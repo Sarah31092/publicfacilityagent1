@@ -6,6 +6,7 @@ from app.core.config import BACKEND_DIR
 from app.services.agent import ask_agent
 from app.services.facility_data import (
     AREA_OPTIONS,
+    count_facilities,
     get_facility,
     get_facility_count,
     search_facilities,
@@ -53,6 +54,7 @@ def search(
             error = str(exception)
     else:
         results = search_facilities(q, area=area, limit=30)
+    total_matches = count_facilities(q, area) if mode == "structured" else None
 
     return templates.TemplateResponse(
         request=request,
@@ -63,6 +65,7 @@ def search(
             "area": area,
             "mode": mode,
             "results": results,
+            "total_matches": total_matches,
             "error": error,
         },
     )
@@ -88,7 +91,7 @@ def ask(
 ):
     if area not in AREA_OPTIONS:
         raise HTTPException(status_code=400, detail="지원하지 않는 지역입니다.")
-    answer = ask_agent(question.strip(), area)
+    response = ask_agent(question.strip(), area)
     return templates.TemplateResponse(
         request=request,
         name="index.html",
@@ -96,7 +99,8 @@ def ask(
             "areas": AREA_OPTIONS,
             "total_count": get_facility_count(),
             "question": question,
-            "answer": answer,
+            "answer": response["answer"],
+            "facilities": response["facilities"],
             "selected_area": area,
         },
     )

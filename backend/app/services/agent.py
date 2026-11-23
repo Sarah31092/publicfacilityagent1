@@ -51,24 +51,22 @@ TOOL_FUNCTIONS = {
 }
 
 
-def _local_rag_answer(question: str, area: str) -> str:
+def _local_rag_answer(question: str, area: str) -> dict[str, Any]:
     try:
         result = search_facilities(question, area=area, mode="vector", limit=5)
     except VectorIndexNotReadyError as error:
-        return str(error)
+        return {"answer": str(error), "facilities": []}
 
     facilities = result["results"]
     if not facilities:
-        return "질문과 가까운 공공시설을 찾지 못했습니다. 지역이나 시설 종류를 바꿔 다시 검색해 주세요."
-
-    lines = ["질문과 관련된 공공시설입니다."]
-    for facility in facilities:
-        lines.append(
-            f"- {facility['개방시설명']} ({facility['개방시설유형구분']})"
-            f" | {facility['소재지도로명주소']}"
-        )
-        lines.append(f"  참고 정보: {facility['document']}")
-    return "\n".join(lines)
+        return {
+            "answer": "질문과 가까운 공공시설을 찾지 못했습니다. 지역이나 시설 종류를 바꿔 다시 검색해 주세요.",
+            "facilities": [],
+        }
+    return {
+        "answer": "질문과 관련된 공공시설을 찾았습니다.",
+        "facilities": facilities,
+    }
 
 
 def _call_tool(name: str, arguments: dict[str, Any]) -> str:
@@ -81,12 +79,13 @@ def _call_tool(name: str, arguments: dict[str, Any]) -> str:
         return json.dumps({"error": str(error)}, ensure_ascii=False)
 
 
-def ask_agent(question: str, area: str = "전국") -> str:
+def ask_agent(question: str, area: str = "전국") -> dict[str, Any]:
     """Let the model call the same search tools exposed by the MCP server."""
     if not OPENAI_API_KEY:
         return _local_rag_answer(question, area)
 
     client = OpenAI(api_key=OPENAI_API_KEY)
+    facilities_by_id: dict[str, dict[str, Any]] = {}
     messages: list[dict[str, Any]] = [
         {
             "role": "system",
@@ -108,12 +107,20 @@ def ask_agent(question: str, area: str = "전국") -> str:
             )
             message = response.choices[0].message
             if not message.tool_calls:
-                return message.content or "검색 결과를 바탕으로 답변을 만들지 못했습니다."
+                return {
+                    "answer": message.content or "검색 결과를 바탕으로 답변을 만들지 못했습니다.",
+                    "facilities": list(facilities_by_id.values()),
+                }
 
             messages.append(message.model_dump(exclude_none=True))
             for tool_call in message.tool_calls:
                 arguments = json.loads(tool_call.function.arguments)
                 tool_result = _call_tool(tool_call.function.name, arguments)
+                if tool_call.function.name == "search_facilities":
+                    payload = json.loads(tool_result)
+                    for facility in payload.get("results", []):
+                        if facility.get("id") is not None:
+                            facilities_by_id[str(facility["id"])] = facility
                 messages.append(
                     {
                         "role": "tool",
@@ -122,6 +129,12 @@ def ask_agent(question: str, area: str = "전국") -> str:
                     }
                 )
     except (OpenAIError, json.JSONDecodeError, TypeError, ValueError) as error:
-        return f"AI 에이전트 처리 중 오류가 발생했습니다: {error}"
+        return {
+            "answer": f"AI 에이전트 처리 중 오류가 발생했습니다: {error}",
+            "facilities": list(facilities_by_id.values()),
+        }
 
-    return "검색 도구 호출 횟수를 초과했습니다. 질문을 나누어 다시 시도해 주세요."
+    return {
+        "answer": "검색 도구 호출 횟수를 초과했습니다. 질문을 나누어 다시 시도해 주세요.",
+        "facilities": list(facilities_by_id.values()),
+    }

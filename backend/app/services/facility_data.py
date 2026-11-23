@@ -74,6 +74,16 @@ def search_facilities(
     query: str = "", area: str = "전국", limit: int = 30
 ) -> list[dict[str, Any]]:
     """Search facility name and type using structured CSV filters."""
+    matches = _matching_facilities(query, area)
+    return [_to_record(row) for _, row in matches.head(limit).iterrows()]
+
+
+def count_facilities(query: str = "", area: str = "전국") -> int:
+    """Count all facilities matching the same filters as structured search."""
+    return len(_matching_facilities(query, area))
+
+
+def _matching_facilities(query: str, area: str) -> pd.DataFrame:
     frame = load_facilities()
     matches = frame.loc[_area_mask(frame, area)]
     query = query.strip()
@@ -85,7 +95,7 @@ def search_facilities(
             query, case=False, regex=False, na=False
         )
         matches = matches.loc[name_matches | type_matches]
-    return [_to_record(row) for _, row in matches.head(limit).iterrows()]
+    return matches
 
 
 def get_facility(facility_id: str) -> dict[str, Any] | None:

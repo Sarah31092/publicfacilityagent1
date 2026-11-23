@@ -5,7 +5,7 @@ import chromadb
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 
 from app.core.config import CHROMA_DIR, EMBEDDING_MODEL
-from app.services.facility_data import load_facilities
+from app.services.facility_data import get_facility, load_facilities
 
 COLLECTION_NAME = "public_facilities"
 BATCH_SIZE = 200
@@ -127,16 +127,13 @@ def search_similar_facilities(
     documents = result["documents"][0]
     metadatas = result["metadatas"][0]
     distances = result["distances"][0]
-    return [
-        {
-            "id": metadata["facility_id"],
-            "개방시설명": metadata["facility_name"],
-            "개방시설유형구분": metadata["facility_type"],
-            "소재지도로명주소": metadata["address"],
-            "document": document,
-            "distance": distance,
-        }
-        for _, document, metadata, distance in zip(
-            ids, documents, metadatas, distances
-        )
-    ]
+    facilities = []
+    for _, document, metadata, distance in zip(
+        ids, documents, metadatas, distances
+    ):
+        facility = get_facility(metadata["facility_id"])
+        if facility is None:
+            continue
+        facility.update({"document": document, "distance": distance})
+        facilities.append(facility)
+    return facilities
