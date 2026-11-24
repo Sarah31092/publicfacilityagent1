@@ -10,9 +10,18 @@
 <section class="panel">
     <h2>시설 검색</h2>
     <form action="/search" method="get" class="search-form">
-        <label for="q">시설명 또는 시설 유형</label>
-        <input id="q" name="q" type="search" value="{{ q if q is defined else '' }}"
-               placeholder="예: 체육관, 수영장, 도서관">
+        <div class="form-row">
+            <div>
+                <label for="facility-name">시설명</label>
+                <input id="facility-name" name="facility_name" type="search" value=""
+                       placeholder="예: 중앙체육관">
+            </div>
+            <div>
+                <label for="place-name">장소명</label>
+                <input id="place-name" name="place_name" type="search" value=""
+                       placeholder="예: 강남구 체육관">
+            </div>
+        </div>
         <div class="form-row">
             <div>
                 <label for="area">지역</label>
@@ -27,6 +36,33 @@
                 </select>
             </div>
             <div>
+                <label for="facility-type">시설 유형</label>
+                <select id="facility-type" name="facility_type">
+                    <option value="">전체 유형</option>
+                    {% for option in facility_types %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label for="fee">이용료</label>
+                <select id="fee" name="fee">
+                    {% for option in fee_options %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="operating">운영일</label>
+                <select id="operating" name="operating">
+                    {% for option in operating_options %}
+                    <option value="{{ option }}">{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
                 <label for="mode">검색 방식</label>
                 <select id="mode" name="mode">
                     <option value="structured">시설명·유형 검색</option>
@@ -34,13 +70,16 @@
                 </select>
             </div>
         </div>
-        <button type="submit">시설 검색</button>
+        <div class="button-row">
+            <button type="submit">시설 검색</button>
+            <button type="reset" class="secondary-button">검색 초기화</button>
+        </div>
     </form>
 </section>
 
 <section class="panel agent-panel">
-    <h2>AI 에이전트에게 질문하기</h2>
-    <p class="muted">예: 서울에서 이용할 수 있는 체육 시설을 찾아줘</p>
+    <h2>AI 맞춤형 시설 추천</h2>
+    <p class="muted">예: 서울에서 주말에 이용할 수 있는 무료 체육시설을 추천해 줘</p>
     <form action="/ask" method="post" class="search-form">
         <label for="question">질문</label>
         <textarea id="question" name="question" rows="3" maxlength="1000" required
@@ -63,6 +102,16 @@
             <summary>AI 답변 보기</summary>
             <p class="plain-text">{{ answer }}</p>
         </details>
+        {% if criteria is defined %}
+        <div class="criteria-summary">
+            <strong>추천 조건</strong>
+            지역: {{ criteria.area }} ·
+            시설 유형: {{ criteria.facility_type or '전체' }} ·
+            이용료: {{ criteria.fee }} ·
+            운영일: {{ criteria.operating }}
+            {% if criteria.minimum_capacity %} · 최소 수용인원: {{ criteria.minimum_capacity }}명{% endif %}
+        </div>
+        {% endif %}
         {% if facilities %}
         <h3>관련 시설 {{ facilities|length }}건</h3>
         <div class="facility-cards">
@@ -99,7 +148,35 @@
                         <dd>{{ facility.get('휴관일') }}</dd>
                     </div>
                     {% endif %}
+                    {% if facility.get('유료사용여부') %}
+                    <div>
+                        <dt>이용료</dt>
+                        <dd>{% if facility.get('유료사용여부') == 'Y' or facility.get('유료사용여부') == 'y' %}유료{% elif facility.get('유료사용여부') == 'N' or facility.get('유료사용여부') == 'n' %}무료{% else %}정보 없음{% endif %}</dd>
+                    </div>
+                    {% endif %}
+                    {% if facility.get('수용가능인원수') %}
+                    <div>
+                        <dt>수용인원</dt>
+                        <dd>{{ facility.get('수용가능인원수') }}명</dd>
+                    </div>
+                    {% endif %}
                 </dl>
+                {% if facility.get('recommendation_reasons') %}
+                <div class="recommendation-reasons">
+                    <strong>추천 이유</strong>
+                    <ul>
+                        {% for reason in facility.get('recommendation_reasons') %}
+                        <li>{{ reason }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                <a class="secondary-button recommendation-detail" href="/facilities/{{ facility.get('id', '') }}">상세정보 보기</a>
+                {% set lat = facility.get('위도') %}
+                {% set lon = facility.get('경도') %}
+                {% if lat and lon %}
+                <a class="secondary-button" href="/search?area={{ criteria.area if criteria is defined else '전국' }}&facility_name={{ facility.get('개방시설명','')|urlencode }}">지도에서 보기</a>
+                {% endif %}
             </article>
             {% endfor %}
         </div>

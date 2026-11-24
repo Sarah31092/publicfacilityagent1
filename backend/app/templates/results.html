@@ -8,8 +8,16 @@
 
 <section class="panel">
     <form action="/search" method="get" class="search-form compact-form">
-        <label for="q">시설명 또는 시설 유형</label>
-        <input id="q" name="q" type="search" value="{{ q }}">
+        <div class="form-row">
+            <div>
+                <label for="facility-name">시설명</label>
+                <input id="facility-name" name="facility_name" type="search" value="{{ facility_name }}">
+            </div>
+            <div>
+                <label for="place-name">장소명</label>
+                <input id="place-name" name="place_name" type="search" value="{{ place_name }}">
+            </div>
+        </div>
         <div class="form-row">
             <div>
                 <label for="area">지역</label>
@@ -20,6 +28,33 @@
                 {% else %}
                 <option value="{{ option }}">{{ option }}</option>
                 {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="facility-type">시설 유형</label>
+                <select id="facility-type" name="facility_type">
+                    <option value=""{% if not selected_type %} selected{% endif %}>전체 유형</option>
+                    {% for option in facility_types %}
+                    <option value="{{ option }}"{% if option == selected_type %} selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div>
+                <label for="fee">이용료</label>
+                <select id="fee" name="fee">
+                    {% for option in fee_options %}
+                    <option value="{{ option }}"{% if option == selected_fee %} selected{% endif %}>{{ option }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="operating">운영일</label>
+                <select id="operating" name="operating">
+                    {% for option in operating_options %}
+                    <option value="{{ option }}"{% if option == selected_operating %} selected{% endif %}>{{ option }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -39,7 +74,10 @@
                 </select>
             </div>
         </div>
-        <button type="submit">다시 검색</button>
+        <div class="button-row">
+            <button type="submit">다시 검색</button>
+            <a class="secondary-button" href="/">검색 초기화</a>
+        </div>
     </form>
 </section>
 
@@ -54,27 +92,91 @@
     유사도 상위 결과 {{ results|length }}건 표시
     {% endif %}
 </p>
-<section class="result-list">
-    {% for facility in results %}
-    <article class="result-card">
-        <div class="card-heading">
-            <div>
-                <span class="tag">{{ facility.get('개방시설유형구분', '유형 미등록') or '유형 미등록' }}</span>
-                <h2><a href="/facilities/{{ facility.get('id', '') }}">{{ facility.get('개방시설명', '시설명 미등록') }}</a></h2>
-            </div>
-            {% if facility.get('distance') is not none %}
-            <span class="score">유사도 검색 결과</span>
-            {% endif %}
-        </div>
-        <p>{{ facility.get('소재지도로명주소', '주소 미등록') or '주소 미등록' }}</p>
-        {% if facility.get('document') %}
-        <p class="muted">{{ facility.get('document') }}</p>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<div class="map-result-layout">
+    <section class="map-column">
+        <div id="facility-map" aria-label="공공시설 위치 지도"></div>
+        {% if not map_markers %}
+        <div class="empty-state map-empty">표시할 유효한 위도·경도 정보가 있는 시설이 없습니다.</div>
         {% endif %}
-    </article>
-    {% else %}
-    <div class="empty-state">조건에 맞는 시설이 없습니다. 검색어 또는 지역을 변경해 주세요.</div>
-    {% endfor %}
-</section>
+    </section>
+    <section class="result-list">
+        {% for facility in results %}
+        <article class="result-card" id="facility-{{ facility.get('id', '') }}">
+            <div class="card-heading">
+                <div>
+                    <span class="tag">{{ facility.get('개방시설유형구분', '유형 미등록') or '유형 미등록' }}</span>
+                    <h2><a href="/facilities/{{ facility.get('id', '') }}?back={{ back_url|urlencode }}">{{ facility.get('개방시설명', '시설명 미등록') }}</a></h2>
+                </div>
+                {% if facility.get('distance') is not none %}
+                <span class="score">유사도 검색 결과</span>
+                {% endif %}
+            </div>
+            <p>{{ facility.get('소재지도로명주소', '주소 미등록') or '주소 미등록' }}</p>
+            {% if facility.get('document') %}
+            <p class="muted">{{ facility.get('document') }}</p>
+            {% endif %}
+            <button type="button" class="map-focus-button" data-facility-id="{{ facility.get('id', '') }}">지도에서 위치 보기</button>
+        </article>
+        {% else %}
+        <div class="empty-state">조건에 맞는 시설이 없습니다. 검색어 또는 지역을 변경해 주세요.</div>
+        {% endfor %}
+    </section>
+</div>
 {% endif %}
 <a class="back-link" href="/">처음으로</a>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+    const markers = {{ map_markers|tojson }};
+    const map = L.map('facility-map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    function escapeHtml(value) {
+        const span = document.createElement('span');
+        span.textContent = value == null ? '' : String(value);
+        return span.innerHTML;
+    }
+
+    const markerById = {};
+    const bounds = [];
+    markers.forEach(function (facility) {
+        const popup = [
+            '<strong>' + escapeHtml(facility.name || '시설명 미등록') + '</strong>',
+            '<br>시설 유형: ' + escapeHtml(facility.type || '정보 없음'),
+            '<br>주소: ' + escapeHtml(facility.address || '정보 없음'),
+            '<br>평일 운영시간: ' + escapeHtml(facility.weekday || '정보 없음'),
+            '<br>이용료: ' + escapeHtml(facility.fee || '정보 없음'),
+            '<br><a href="/facilities/' + encodeURIComponent(facility.id) +
+            '?back={{ back_url|urlencode }}">상세정보 보기</a>'
+        ].join('');
+        const marker = L.marker([facility.latitude, facility.longitude]).addTo(map);
+        marker.bindPopup(popup);
+        markerById[facility.id] = marker;
+        bounds.push([facility.latitude, facility.longitude]);
+    });
+
+    if (bounds.length) {
+        map.fitBounds(bounds, { padding: [25, 25], maxZoom: 15 });
+    } else {
+        map.setView([36.5, 127.5], 7);
+    }
+
+    document.querySelectorAll('.map-focus-button').forEach(function (button) {
+        button.addEventListener('click', function () {
+            const marker = markerById[button.dataset.facilityId];
+            if (!marker) {
+                alert('이 시설의 유효한 지도 좌표가 없습니다.');
+                return;
+            }
+            map.setView(marker.getLatLng(), 15);
+            marker.openPopup();
+            document.getElementById('facility-map').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+})();
+</script>
 {% endblock %}

@@ -11,9 +11,24 @@ def search_public_facilities(
     area: str = "전국",
     mode: str = "structured",
     limit: int = 10,
+    facility_type: str = "",
+    fee: str = "전체",
+    operating: str = "전체",
+    facility_name: str = "",
+    place_name: str = "",
 ) -> dict:
     """Search public facilities by region, name/type, or vector similarity."""
-    return search_facilities(query=query, area=area, mode=mode, limit=limit)
+    return search_facilities(
+        query=query,
+        area=area,
+        mode=mode,
+        limit=limit,
+        facility_type=facility_type,
+        fee=fee,
+        operating=operating,
+        facility_name=facility_name,
+        place_name=place_name,
+    )
 
 
 @mcp.tool()

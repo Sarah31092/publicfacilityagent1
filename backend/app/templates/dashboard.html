@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}공공시설 통계 대시보드{% endblock %}
+{% block content %}
+<section class="page-heading">
+    <p class="eyebrow">PUBLIC FACILITY DASHBOARD</p>
+    <h1>공공시설 통계 대시보드</h1>
+</section>
+
+<section class="panel">
+    <form action="/dashboard" method="get" class="dashboard-filter-form">
+        <div>
+            <label for="dashboard-area">지역</label>
+            <select id="dashboard-area" name="area">
+                {% for option in areas %}
+                <option value="{{ option }}" {% if option == selected_area %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="dashboard-type">시설 유형</label>
+            <select id="dashboard-type" name="facility_type">
+                <option value="">전체 유형</option>
+                {% for option in facility_types %}
+                <option value="{{ option }}" {% if option == selected_type %}selected{% endif %}>{{ option }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="button-row">
+            <button type="submit">통계 조회</button>
+            <a class="secondary-button" href="/dashboard">검색 초기화</a>
+        </div>
+    </form>
+</section>
+
+<section class="summary-cards">
+    <article><span>전체 시설 수</span><strong>{{ "{:,}".format(statistics.total_count) }}</strong></article>
+    <article><span>시설 유형 수</span><strong>{{ "{:,}".format(statistics.facility_type_count) }}</strong></article>
+    <article><span>제공기관 수</span><strong>{{ "{:,}".format(statistics.provider_count) }}</strong></article>
+    <article><span>무료 시설 수</span><strong>{{ "{:,}".format(statistics.free_count) }}</strong></article>
+    <article><span>유료 시설 수</span><strong>{{ "{:,}".format(statistics.paid_count) }}</strong></article>
+</section>
+
+<section class="dashboard-grid">
+    <article class="panel chart-panel">
+        <h2>지역별 시설 수</h2>
+        <canvas id="region-chart" height="260"></canvas>
+    </article>
+    <article class="panel chart-panel">
+        <h2>시설 유형별 분포</h2>
+        <canvas id="type-chart" height="260"></canvas>
+    </article>
+    <article class="panel chart-panel">
+        <h2>무료 및 유료 시설 비율</h2>
+        <canvas id="fee-chart" height="260"></canvas>
+    </article>
+    <article class="panel chart-panel">
+        <h2>제공기관별 시설 수</h2>
+        <canvas id="provider-chart" height="260"></canvas>
+    </article>
+</section>
+
+<section class="panel">
+    <h2>이용료 및 운영일 현황</h2>
+    <div class="metric-grid">
+        <div><dt>무료 시설</dt><dd>{{ "{:,}".format(statistics.free_count) }}건</dd></div>
+        <div><dt>유료 시설</dt><dd>{{ "{:,}".format(statistics.paid_count) }}건</dd></div>
+        <div><dt>이용료 정보 없음</dt><dd>{{ "{:,}".format(statistics.unknown_fee_count) }}건</dd></div>
+        <div><dt>평일 운영 시설</dt><dd>{{ "{:,}".format(statistics.weekday_count) }}건</dd></div>
+        <div><dt>주말 운영 시설</dt><dd>{{ "{:,}".format(statistics.weekend_count) }}건</dd></div>
+        <div><dt>운영정보 없음</dt><dd>{{ "{:,}".format(statistics.operating_unknown_count) }}건</dd></div>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>제공기관별 시설 수</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>순위</th><th>제공기관</th><th>시설 수</th></tr></thead>
+            <tbody>
+            {% for name, count in statistics.provider_counts.items() %}
+            <tr><td>{{ loop.index }}</td><td>{{ name or '정보 없음' }}</td><td>{{ "{:,}".format(count) }}</td></tr>
+            {% else %}
+            <tr><td colspan="3">집계할 제공기관 정보가 없습니다.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<p class="muted basis-text">
+    데이터 기준일자:
+    {% if statistics.data_basis.min %}
+    {{ statistics.data_basis.min }} ~ {{ statistics.data_basis.max }}
+    {% else %}
+    정보 없음
+    {% endif %}
+</p>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    if (typeof Chart === 'undefined') return;
+    Chart.defaults.font.family = '"Malgun Gothic", "Apple SD Gothic Neo", sans-serif';
+    const colors = ['#175cd3','#2e90fa','#53b1fd','#7f56d9','#ee46bc','#f79009','#12b76a','#667085','#475467'];
+    const regionLabels = {{ statistics.region_counts.keys() | list | tojson }};
+    const regionValues = {{ statistics.region_counts.values() | list | tojson }};
+    const typeLabels = {{ statistics.type_counts.keys() | list | tojson }};
+    const typeValues = {{ statistics.type_counts.values() | list | tojson }};
+    const providerLabels = {{ statistics.provider_counts.keys() | list | tojson }};
+    const providerValues = {{ statistics.provider_counts.values() | list | tojson }};
+
+    new Chart(document.getElementById('region-chart'), {
+        type: 'bar',
+        data: {labels: regionLabels, datasets: [{label: '시설 수', data: regionValues, backgroundColor: '#175cd3'}]},
+        options: {responsive: true, plugins: {legend: {display: true}, title: {display: false}}, scales: {y: {beginAtZero: true, ticks: {precision: 0}}}}
+    });
+    new Chart(document.getElementById('type-chart'), {
+        type: 'pie',
+        data: {labels: typeLabels, datasets: [{data: typeValues, backgroundColor: colors}]},
+        options: {responsive: true, plugins: {legend: {position: 'bottom'}, title: {display: false}}}
+    });
+    new Chart(document.getElementById('fee-chart'), {
+        type: 'doughnut',
+        data: {labels: ['무료','유료','정보 없음'], datasets: [{data: [{{ statistics.free_count }},{{ statistics.paid_count }},{{ statistics.unknown_fee_count }}], backgroundColor: ['#12b76a','#175cd3','#98a2b3']}]},
+        options: {responsive: true, plugins: {legend: {position: 'bottom'}}}
+    });
+    new Chart(document.getElementById('provider-chart'), {
+        type: 'bar',
+        data: {labels: providerLabels, datasets: [{label: '시설 수', data: providerValues, backgroundColor: '#7f56d9'}]},
+        options: {indexAxis: 'y', responsive: true, plugins: {legend: {display: true}}, scales: {x: {beginAtZero: true, ticks: {precision: 0}}}}
+    });
+})();
+</script>
+{% endblock %}

@@ -9,12 +9,26 @@ def search_facilities(
     area: str = "전국",
     mode: str = "structured",
     limit: int = 10,
+    facility_type: str = "",
+    fee: str = "전체",
+    operating: str = "전체",
+    facility_name: str = "",
+    place_name: str = "",
 ) -> dict[str, Any]:
     """Search by facility name/type or find semantically similar facilities."""
     if mode == "vector":
         results = search_similar_facilities(query, area=area, limit=limit)
     elif mode == "structured":
-        results = structured_search(query, area=area, limit=limit)
+        results = structured_search(
+            query,
+            area=area,
+            facility_type=facility_type,
+            fee=fee,
+            operating=operating,
+            facility_name=facility_name,
+            place_name=place_name,
+            limit=limit,
+        )
     else:
         raise ValueError("검색 방식은 structured 또는 vector여야 합니다.")
     return {"query": query, "area": area, "mode": mode, "results": results}

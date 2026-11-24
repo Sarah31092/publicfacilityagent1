@@ -22,6 +22,8 @@ a:hover { text-decoration: underline; }
 .header-inner { min-height: 64px; display: flex; align-items: center; justify-content: space-between; }
 .header-inner > span, .muted { color: #667085; font-size: .92rem; }
 .brand { color: #101828; font-size: 1.1rem; font-weight: 700; }
+.main-nav { display: flex; gap: 14px; font-size: .9rem; }
+.main-nav a { color: #475467; font-weight: 600; }
 
 .hero { padding: 48px 0 25px; }
 .hero h1, .page-heading h1 { margin: 5px 0; font-size: clamp(1.7rem, 4vw, 2.25rem); }
@@ -52,6 +54,20 @@ input, select, textarea {
 textarea { resize: vertical; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .form-row > div { display: grid; gap: 7px; }
+.button-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.secondary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border: 1px solid #d0d5dd;
+    border-radius: 7px;
+    background: #fff;
+    color: #344054;
+    font-weight: 700;
+    text-decoration: none;
+}
+.secondary-button:hover { background: #f9fafb; text-decoration: none; }
 button {
     justify-self: start;
     padding: 10px 20px;
@@ -96,6 +112,93 @@ button:hover { background: #1849a9; }
 .detail-row dt { color: #667085; font-weight: 600; }
 .detail-row dd { margin: 0; overflow-wrap: anywhere; }
 .back-link { display: inline-block; margin: 10px 0 32px; }
+.detail-grid { display: grid; gap: 2px; }
+.detail-panel h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.criteria-summary {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-left: 3px solid #175cd3;
+    background: #fff;
+    color: #475467;
+}
+.recommendation-reasons {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #eaecf0;
+    color: #475467;
+    font-size: .88rem;
+}
+.recommendation-reasons ul { margin: 6px 0 12px; padding-left: 18px; }
+.recommendation-detail { margin-right: 8px; }
+.map-result-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr);
+    gap: 16px;
+    align-items: start;
+}
+.map-column { position: sticky; top: 16px; }
+#facility-map {
+    width: 100%;
+    height: 520px;
+    border: 1px solid #e4e7ec;
+    border-radius: 12px;
+    background: #eef2f6;
+}
+.map-empty { margin-top: 8px; }
+.map-focus-button {
+    margin-top: 8px;
+    padding: 8px 12px;
+    font-size: .85rem;
+}
+.dashboard-filter-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 14px;
+    align-items: end;
+}
+.dashboard-filter-form > div { display: grid; gap: 7px; }
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+}
+.summary-cards article {
+    padding: 18px;
+    border: 1px solid #e4e7ec;
+    border-radius: 12px;
+    background: #fff;
+}
+.summary-cards span, .summary-cards strong { display: block; }
+.summary-cards span { color: #667085; font-size: .86rem; }
+.summary-cards strong { margin-top: 4px; font-size: 1.55rem; }
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 16px;
+}
+.chart-panel { min-width: 0; }
+.chart-panel canvas { max-height: 280px; }
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.metric-grid div {
+    padding: 12px;
+    border: 1px solid #eaecf0;
+    border-radius: 8px;
+}
+.metric-grid dt { color: #667085; font-size: .85rem; }
+.metric-grid dd { margin: 3px 0 0; font-weight: 700; }
+.table-wrap { overflow-x: auto; }
+.table-wrap table { width: 100%; border-collapse: collapse; }
+.table-wrap th, .table-wrap td {
+    padding: 10px;
+    border-bottom: 1px solid #eaecf0;
+    text-align: left;
+}
+.basis-text { margin-bottom: 30px; }
 .site-footer { padding: 24px 0; border-top: 1px solid #e4e7ec; color: #667085; font-size: .85rem; }
 
 @media (max-width: 600px) {
@@ -105,4 +208,12 @@ button:hover { background: #1849a9; }
     .form-row { grid-template-columns: 1fr; }
     .detail-row { grid-template-columns: 1fr; gap: 3px; }
     .facility-info > div { grid-template-columns: 1fr; gap: 2px; }
+    .map-result-layout { grid-template-columns: 1fr; }
+    .map-column { position: static; }
+    #facility-map { height: 420px; }
+    .main-nav { gap: 8px; }
+    .dashboard-filter-form { grid-template-columns: 1fr; }
+    .summary-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dashboard-grid { grid-template-columns: 1fr; }
+    .metric-grid { grid-template-columns: 1fr 1fr; }
 }
